@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ลงทะเบียน</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* วางไฟล์ ProductSans-Regular.woff2 / ProductSans-Bold.woff2 ไว้ข้าง index.html ถ้ามี */
+@font-face{font-family:'Product Sans';font-weight:400;src:local('Product Sans'),local('ProductSans-Regular'),url('ProductSans-Regular.woff2') format('woff2')}
+@font-face{font-family:'Product Sans';font-weight:700;src:local('Product Sans Bold'),local('ProductSans-Bold'),url('ProductSans-Bold.woff2') format('woff2')}
+:root{--ink:#000;--muted:#5f6368;--accent:#1a73e8;--line:#dadce0}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#fff;font-family:'Product Sans','Google Sans','Prompt',system-ui,sans-serif;overflow:hidden}
+body{display:flex;align-items:center;justify-content:center}
+#frame{position:relative;width:min(100vw,calc(100dvh*9/16));height:min(100dvh,calc(100vw*16/9));background:#fff;color:var(--ink);container-type:size;overflow:hidden}
+#scroll{position:absolute;inset:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;text-align:center;padding:6cqw 8cqw 14cqw}
+.view{width:100%;margin:auto 0;display:none;flex-direction:column;align-items:center;gap:3cqw}
+.view.on{display:flex}
+#formBox{width:100%;display:flex;flex-direction:column;align-items:center;gap:3cqw}
+a#logoLink[href] #logo{cursor:pointer}
+#logo,#logo2,#aLogo{width:26cqw;height:26cqw;border-radius:50%;object-fit:cover;background:var(--line)}
+h1{font-size:7.2cqw;font-weight:700;line-height:1.25}
+.email{font-size:4.2cqw;color:var(--accent);font-weight:600;word-break:break-all}
+.detail{font-size:4cqw;color:var(--muted);line-height:1.6;white-space:pre-line}
+input,textarea{width:100%;font:inherit;font-size:4.2cqw;text-align:center;padding:3cqw;border:1.5px solid var(--line);border-radius:3cqw;background:#fff;color:var(--ink)}
+textarea{resize:none;height:22cqw}
+input:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+input[type=color]{height:11cqw;padding:1cqw}
+input[readonly]{background:#f1f3f4;color:var(--muted)}
+button{font:inherit;width:100%;border:0;border-radius:3cqw;cursor:pointer}
+.primary{background:var(--accent);color:#fff;font-weight:700;font-size:4.4cqw;padding:3.4cqw}
+.primary:active{filter:brightness(.85)}
+.ghost{background:none;color:var(--muted);font-size:3.8cqw;padding:2cqw}
+button:disabled{opacity:.5}
+.msg{font-size:3.6cqw;min-height:1.4em;word-break:break-all}.err{color:#b3261e}.ok{color:#1e7a46}
+.done{font-size:5.5cqw;font-weight:600}
+small.lb{font-size:3.2cqw;color:var(--muted);margin-bottom:-1.5cqw}
+label.file{font-size:3.6cqw;color:var(--accent);text-decoration:underline;cursor:pointer}
+/* รายการลิงก์ */
+.item{width:100%;border:1.5px solid var(--line);border-radius:3cqw;padding:3cqw;display:flex;flex-direction:column;gap:2cqw;align-items:center}
+.item b{font-size:4.2cqw;word-break:break-all}
+.item span{font-size:3.2cqw;color:var(--muted);word-break:break-all}
+.row{display:flex;flex-wrap:wrap;gap:2cqw;width:100%}
+.item i{font-style:normal;font-size:3.4cqw;color:var(--accent);font-weight:600}
+.entry{width:100%;display:flex;justify-content:space-between;gap:3cqw;padding:2.4cqw 0;border-bottom:1px solid var(--line);font-size:3.8cqw;text-align:left}
+.entry em{font-style:normal;color:var(--muted);font-size:3.2cqw;white-space:nowrap}
+.row button{flex:1 1 28%;font-size:3.6cqw;padding:2.4cqw;background:#f1f3f4;color:var(--ink)}
+.row button.del{color:#b3261e}
+/* ปุ่มมุมขวาล่าง */
+#corner{position:absolute;right:2cqw;bottom:calc(2cqw + env(safe-area-inset-bottom,0px));z-index:10;display:flex;gap:1cqw}
+#corner button{width:11cqw;height:11cqw;padding:0;background:none;color:#9aa0a6;font-size:5.4cqw;line-height:1;border-radius:50%;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#corner button:active{background:#eee;color:var(--accent)}
+#qBtn{width:11cqw;height:11cqw;display:flex;align-items:center;justify-content:center;font-size:5.4cqw;color:#9aa0a6;pointer-events:none;user-select:none}
+#corner button#tBtn{font-size:4.2cqw;width:14cqw}
+#frame.admin #corner,#frame.admin #langMenu{display:none}
+#langMenu{display:none;position:absolute;right:3cqw;bottom:16cqw;z-index:11;background:#fff;border:1.5px solid var(--line);border-radius:3cqw;padding:1cqw;flex-direction:column;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+#langMenu.on{display:flex}
+#langMenu button{background:none;color:var(--ink);font-size:4cqw;padding:2.4cqw 5cqw;text-align:center;white-space:nowrap}
+#langMenu button:active{background:#f1f3f4}
+#gt,.skiptranslate iframe,.goog-te-banner-frame{display:none!important}
+body{top:0!important;position:static!important}
+</style>
+</head>
+<body>
+<div id="frame">
+  <div id="scroll">
+
+    <!-- หน้าผู้ใช้ (ตามลิงก์ ?p=รหัส) -->
+    <div class="view on" id="userView">
+      <a id="logoLink" target="_blank" rel="noopener noreferrer" style="display:contents"><img id="logo" alt="โลโก้"></a>
+      <h1 id="title">กำลังโหลด…</h1>
+      <div class="email" id="email"></div>
+      <div class="detail" id="detail"></div>
+      <div id="formBox">
+        <input id="username" autocomplete="off">
+        <button class="primary" id="send"></button>
+        <button class="ghost" id="later"></button>
+      </div>
+      <div class="msg" id="uMsg"></div>
+    </div>
+
+    <div class="view" id="doneView">
+      <img id="logo2" alt="">
+      <div class="done" id="doneText"></div>
+    </div>
+
+    <!-- แอดมิน: รายการลิงก์ -->
+    <div class="view" id="listView">
+      <h1>จัดการลิงก์</h1>
+      <button class="primary" id="lNew">สร้างลิงก์ใหม่</button>
+      <div id="lItems" style="width:100%;display:flex;flex-direction:column;gap:3cqw"></div>
+      <div class="msg" id="lMsg"></div>
+    </div>
+
+    <!-- แอดมิน: ข้อมูลที่ผู้ใช้กรอก (real-time) -->
+    <div class="view" id="subView">
+      <h1 id="sTitle"></h1>
+      <div class="email" id="sCount"></div>
+      <div id="sItems" style="width:100%"></div>
+      <button class="ghost" id="sBack">กลับรายการลิงก์</button>
+    </div>
+
+    <!-- แอดมิน: ตั้งค่าลิงก์ -->
+    <div class="view" id="adminView">
+      <img id="aLogo" alt="โลโก้">
+      <label class="file">เลือกโลโก้<input type="file" id="aFile" accept="image/*" hidden></label>
+      <small class="lb">ลิงก์ปลายทางเมื่อกดโลโก้ (เว้นว่าง = กดไม่ได้)</small><input id="aLogoUrl" placeholder="https://example.com" inputmode="url" autocapitalize="off">
+      <small class="lb">ชื่อลิงก์ (a-z 0-9 - _) เช่น promo1</small><input id="aSlug">
+      <small class="lb">หัวข้อ</small><input id="aTitle" placeholder="หัวข้อ">
+      <small class="lb">@gmail</small><input id="aEmail" placeholder="name@gmail.com">
+      <small class="lb">รายละเอียด</small><textarea id="aDetail" placeholder="รายละเอียด"></textarea>
+      <small class="lb">ข้อความในช่องที่ผู้ใช้กรอก</small><input id="aPh">
+      <small class="lb">ข้อความปุ่มส่ง</small><input id="aSend">
+      <small class="lb">ข้อความปุ่มที่ 2 (เว้นว่าง = ซ่อนปุ่ม)</small><input id="aLater">
+      <small class="lb">ข้อความเมื่อส่งสำเร็จ</small><input id="aDoneSend">
+      <small class="lb">ข้อความเมื่อกดปุ่มที่ 2</small><input id="aDoneLater">
+      <small class="lb">ข้อความเมื่อยังไม่กรอกชื่อ</small><input id="aErr">
+      <small class="lb">สีปุ่ม</small><input type="color" id="aColor">
+      <button class="primary" id="aSave">บันทึกและสร้างลิงก์</button>
+      <button class="ghost" id="aBack">กลับรายการลิงก์</button>
+      <div class="msg" id="aMsg"></div>
+    </div>
+
+  </div>
+  <div id="langMenu"></div>
+  <div id="gt"></div>
+  <div id="corner">
+    <span id="qBtn" aria-hidden="true">?</span>
+    <button id="tBtn" type="button" aria-label="แปลภาษา">A文</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const VIEWS = ['userView','doneView','listView','adminView','subView'];
+function show(v){
+  VIEWS.forEach(x=>$(x).classList.toggle('on',x===v));
+  $('frame').classList.toggle('admin', v==='listView'||v==='adminView'||v==='subView');
+  $('scroll').scrollTop = 0;
+}
+
+/* ====== ใส่ค่า Firebase ของคุณตรงนี้ ====== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDWQR_szdfoeXDZC1GpMvlA2n83J7SEXco",
+  authDomain: "online-f11ce.firebaseapp.com",
+  projectId: "online-f11ce",
+  storageBucket: "online-f11ce.firebasestorage.app",
+  messagingSenderId: "247456580138",
+  appId: "1:247456580138:web:5b82b2a620b526a70e3953",
+  measurementId: "G-H48CV9TYHX"
+};
+/* ========================================= */
+
+const BLANK = 'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#dadce0"/></svg>');
+const D = { placeholder:'ชื่อผู้ใช้งาน', sendText:'ส่ง', laterText:'ไม่ใช่ตอนนี้', doneSend:'ส่งเรียบร้อยแล้ว', doneLater:'ไว้คราวหน้านะ', errEmpty:'กรุณากรอกชื่อผู้ใช้งาน', color:'#1a73e8' };
+let settings = {}, pageId = new URLSearchParams(location.search).get('p') || '';
+let editing = null, logoData = '', db = null, pages = {};
+const v = (k,o=settings) => (o[k]===undefined || (o[k]==='' && k!=='laterText')) ? D[k] : o[k];
+const linkOf = id => location.origin.replace('null','') + location.pathname + '?p=' + encodeURIComponent(id);
+
+/* ---------- หน้าผู้ใช้ ---------- */
+const safeUrl = u => { u=(u||'').trim(); if(!u) return ''; if(!/^[a-z][a-z0-9+.-]*:/i.test(u)) u='https://'+u; return /^https?:\/\//i.test(u) ? u : ''; };
+function applySettings(found){
+  const lu = found ? safeUrl(settings.logoUrl) : '';
+  if(lu) $('logoLink').href = lu; else $('logoLink').removeAttribute('href');
+  $('title').textContent = found ? (settings.title || 'ยังไม่ได้ตั้งหัวข้อ') : 'ไม่พบหน้านี้';
+  $('email').textContent = found ? (settings.email||'') : '';
+  $('detail').textContent = found ? (settings.detail||'') : (pageId ? 'ลิงก์นี้ไม่มีอยู่หรือถูกลบแล้ว' : 'กรุณาเปิดผ่านลิงก์ที่ได้รับ');
+  $('logo').src = $('logo2').src = (found && settings.logo) || BLANK;
+  $('formBox').style.display = found ? '' : 'none';
+  $('username').placeholder = v('placeholder');
+  $('send').textContent = v('sendText');
+  $('later').textContent = v('laterText');
+  $('later').style.display = v('laterText') ? '' : 'none';
+  document.documentElement.style.setProperty('--accent', found ? v('color') : D.color);
+}
+async function loadPage(){
+  if(!pageId || !db){ applySettings(false); if(pageId) { $('uMsg').textContent='เชื่อมต่อ Firebase ไม่ได้'; $('uMsg').className='msg err'; } return; }
+  try{
+    const s = await db.collection('pages').doc(pageId).get();
+    settings = s.exists ? s.data() : {};
+    applySettings(s.exists);
+  }catch(e){ applySettings(false); $('uMsg').textContent='โหลดข้อมูลไม่ได้ ตรวจสอบ key และ rules'; $('uMsg').className='msg err'; }
+}
+$('send').addEventListener('click', async () => {
+  const name = $('username').value.trim(), m = $('uMsg'); m.className='msg err';
+  if(!name){ m.textContent=v('errEmpty'); return; }
+  $('send').disabled = true;
+  try{
+    await db.collection('submissions').add({
+      pageId, username:name, email:settings.email||'', title:settings.title||'',
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    $('doneText').textContent=v('doneSend'); show('doneView');
+  }catch(e){ m.textContent='ส่งไม่สำเร็จ ลองใหม่อีกครั้ง'; }
+  $('send').disabled = false;
+});
+$('later').addEventListener('click',()=>{ $('doneText').textContent=v('doneLater'); show('doneView'); });
+
+/* ---------- แอดมิน: รายการลิงก์ ---------- */
+async function copy(text,msgEl){
+  try{ await navigator.clipboard.writeText(text); msgEl.textContent='คัดลอกลิงก์แล้ว'; msgEl.className='msg ok'; }
+  catch(e){ prompt('คัดลอกลิงก์นี้', text); }
+}
+let subs = [], unsubPages = null, unsubSubs = null, viewSub = null;
+const when = d => d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}) : 'เมื่อสักครู่';
+const ts = d => d.createdAt && d.createdAt.toMillis ? d.createdAt.toMillis() : Date.now();
+const subsOf = id => subs.filter(x=>x.pageId===id).sort((a,b)=>ts(b)-ts(a));
+function startLive(){
+  if(!db || unsubPages) return;
+  const m=$('lMsg'), fail=()=>{ m.textContent='โหลดข้อมูลไม่ได้ ตรวจสอบ rules'; m.className='msg err'; };
+  unsubPages = db.collection('pages').onSnapshot(snap=>{ pages={}; snap.forEach(d=>pages[d.id]=d.data()); renderAll(); },fail);
+  unsubSubs = db.collection('submissions').onSnapshot(snap=>{ subs=[]; snap.forEach(d=>subs.push({id:d.id,...d.data()})); renderAll(); },fail);
+}
+function stopLive(){ [unsubPages,unsubSubs].forEach(f=>f&&f()); unsubPages=unsubSubs=null; }
+function renderAll(){ renderList(); renderSubs(); }
+function openList(){
+  show('listView'); $('lMsg').textContent='';
+  if(!db){ $('lMsg').textContent='เชื่อมต่อ Firebase ไม่ได้'; $('lMsg').className='msg err'; return; }
+  startLive(); renderList();
+}
+function renderList(){
+  const box=$('lItems'), m=$('lMsg'); box.innerHTML='';
+  const ids = Object.keys(pages);
+  if(!ids.length){ if(!m.classList.contains('err')){ m.textContent='ยังไม่มีลิงก์ กดสร้างลิงก์ใหม่'; m.className='msg'; } return; }
+  if(m.textContent==='ยังไม่มีลิงก์ กดสร้างลิงก์ใหม่') m.textContent='';
+  ids.forEach(id => {
+    const list = subsOf(id);
+    const it = document.createElement('div'); it.className='item';
+    const t = document.createElement('b'); t.textContent = pages[id].title || id;
+    const u = document.createElement('span'); u.textContent = linkOf(id);
+    const c = document.createElement('i'); c.textContent = 'กรอกแล้ว '+list.length+' คน';
+    const last = document.createElement('span'); last.textContent = list.length ? 'ล่าสุด: '+list.slice(0,3).map(x=>x.username).join(', ') : 'ยังไม่มีผู้กรอก';
+    const row = document.createElement('div'); row.className='row';
+    [['คัดลอก',()=>copy(linkOf(id),m)],['เปิด',()=>window.open(linkOf(id),'_blank')],['ดูข้อมูล',()=>{ viewSub=id; renderSubs(); show('subView'); }],['แก้ไข',()=>openEditor(id)],
+     ['ลบ',async()=>{ if(!confirm('ลบลิงก์ '+id+' ? (ข้อมูลที่ผู้ใช้กรอกจะยังอยู่)')) return; try{ await db.collection('pages').doc(id).delete(); }catch(e){ m.textContent='ลบไม่สำเร็จ'; m.className='msg err'; } },'del']
+    ].forEach(([label,fn,cls]) => { const b=document.createElement('button'); b.type='button'; b.textContent=label; if(cls) b.className=cls; b.addEventListener('click',fn); row.appendChild(b); });
+    it.append(t,u,c,last,row); box.appendChild(it);
+  });
+}
+function renderSubs(){
+  if(!viewSub) return;
+  const list = subsOf(viewSub), box=$('sItems'); box.innerHTML='';
+  $('sTitle').textContent = (pages[viewSub] && pages[viewSub].title) || viewSub;
+  $('sCount').textContent = 'กรอกแล้ว '+list.length+' คน (อัปเดตสด)';
+  if(!list.length){ box.textContent='ยังไม่มีผู้กรอก'; box.className='detail'; return; }
+  box.className='';
+  list.forEach(x=>{ const r=document.createElement('div'); r.className='entry'; const a=document.createElement('span'); a.textContent=x.username; const b=document.createElement('em'); b.textContent=when(x); r.append(a,b); box.appendChild(r); });
+}
+$('sBack').addEventListener('click',()=>{ viewSub=null; openList(); });
+$('lNew').addEventListener('click',()=>openEditor(null));
+
+/* ---------- แอดมิน: ตั้งค่าลิงก์ ---------- */
+const randId = () => Math.random().toString(36).slice(2,8);
+function openEditor(id){
+  editing = id; const o = id ? pages[id] : {};
+  $('aSlug').value = id || ''; $('aSlug').readOnly = !!id;
+  $('aTitle').value = o.title||''; $('aEmail').value = o.email||''; $('aDetail').value = o.detail||'';
+  $('aPh').value = v('placeholder',o); $('aSend').value = v('sendText',o); $('aLater').value = v('laterText',o);
+  $('aDoneSend').value = v('doneSend',o); $('aDoneLater').value = v('doneLater',o); $('aErr').value = v('errEmpty',o); $('aColor').value = v('color',o);
+  $('aLogoUrl').value = o.logoUrl||''; logoData = o.logo||''; $('aLogo').src = logoData||BLANK; $('aMsg').textContent='';
+  show('adminView');
+}
+$('aFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  const img = new Image(), url = URL.createObjectURL(f);
+  img.onload = () => {
+    const c = document.createElement('canvas'), s = Math.min(256/img.width,256/img.height,1);
+    c.width = img.width*s; c.height = img.height*s;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    logoData = c.toDataURL('image/png'); $('aLogo').src = logoData; URL.revokeObjectURL(url);
+  };
+  img.src = url;
+});
+$('aSave').addEventListener('click', async () => {
+  const m = $('aMsg'); m.className='msg err';
+  const slug = $('aSlug').value.trim().toLowerCase();
+  if(!/^[a-z0-9_-]{2,40}$/.test(slug)){ m.textContent='ชื่อลิงก์ใช้ได้เฉพาะ a-z 0-9 - _ (2-40 ตัว)'; return; }
+  if(!editing && pages[slug]){ m.textContent='ชื่อลิงก์นี้มีอยู่แล้ว เปลี่ยนชื่อใหม่'; return; }
+  const data = { title:$('aTitle').value.trim(), email:$('aEmail').value.trim(), detail:$('aDetail').value.trim(), logo:logoData, logoUrl:safeUrl($('aLogoUrl').value),
+    placeholder:$('aPh').value.trim(), sendText:$('aSend').value.trim(), laterText:$('aLater').value.trim(),
+    doneSend:$('aDoneSend').value.trim(), doneLater:$('aDoneLater').value.trim(), errEmpty:$('aErr').value.trim(), color:$('aColor').value,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp() };
+  if(!editing) data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+  try{
+    await db.collection('pages').doc(slug).set(data,{merge:true});
+    pages[slug] = {...(pages[slug]||{}), ...data}; editing = slug; $('aSlug').readOnly = true;
+    const link = linkOf(slug); m.className='msg ok'; m.textContent='บันทึกแล้ว: '+link; copy(link,m).then(()=>{ m.textContent='บันทึกแล้ว และคัดลอกลิงก์แล้ว: '+link; });
+  }catch(e){ m.textContent='บันทึกไม่สำเร็จ ตรวจสอบ rules'; }
+});
+$('aBack').addEventListener('click',()=>openList());
+
+/* ---------- แปลภาษา (Google Translate) ---------- */
+const LANGS = [['ไทย (ต้นฉบับ)',''],['English','en'],['中文','zh-CN'],['日本語','ja'],['한국어','ko']];
+const gtCode = (document.cookie.match(/googtrans=\/[^/]+\/([^;]+)/)||[])[1] || '';
+LANGS.forEach(([name,code])=>{
+  const b=document.createElement('button'); b.type='button'; b.textContent=(code===gtCode?'✓ ':'')+name;
+  b.addEventListener('click',()=>{
+    const exp = code ? '' : ';expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    const val = code ? '/th/'+code : '';
+    document.cookie = 'googtrans='+val+';path=/'+exp;
+    try{ document.cookie = 'googtrans='+val+';path=/;domain='+location.hostname+exp; }catch(e){}
+    location.reload();
+  });
+  $('langMenu').appendChild(b);
+});
+$('tBtn').addEventListener('click',e=>{ e.stopPropagation(); $('langMenu').classList.toggle('on'); });
+document.addEventListener('click',()=>$('langMenu').classList.remove('on'));
+if(gtCode){
+  window.gtInit = () => new google.translate.TranslateElement({pageLanguage:'th',autoDisplay:false},'gt');
+  const sc=document.createElement('script'); sc.src='https://translate.google.com/translate_a/element.js?cb=gtInit'; document.head.appendChild(sc);
+}
+
+/* ---------- เริ่มต้น: ไม่มี ?p= = หน้าแอดมิน / มี ?p= = หน้าผู้ใช้ ---------- */
+try{ firebase.initializeApp(firebaseConfig); db = firebase.firestore(); }catch(e){ console.error(e); }
+if(pageId){ show('userView'); loadPage(); }
+else{ document.title='จัดการลิงก์'; openList(); }
+</script>
+</body>
+</html>
