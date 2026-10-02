@@ -23,7 +23,8 @@ body{position:fixed;inset:0;width:100%;height:100dvh;display:flex;align-items:ce
 a#logoLink[href] #logo{cursor:pointer}
 #logo,#logo2,#aLogo{width:26cqw;height:26cqw;border-radius:50%;object-fit:cover;background:var(--line)}
 h1{font-size:7.2cqw;font-weight:700;line-height:1.25}
-.email{font-size:4.2cqw;color:var(--accent);font-weight:600;word-break:break-all}
+.email{font-size:4.2cqw;color:var(--accent);font-weight:600;word-break:break-all;display:flex;align-items:center;justify-content:center;gap:1.8cqw}
+.email svg{width:4.6cqw;height:4.6cqw;flex:none}
 .detail{font-size:4cqw;color:var(--muted);line-height:1.6;white-space:pre-line}
 input,textarea{width:100%;font:inherit;font-size:4.2cqw;text-align:center;padding:3cqw;border:1.5px solid var(--line);border-radius:3cqw;background:#fff;color:var(--ink)}
 textarea{resize:none;height:22cqw}
@@ -80,7 +81,10 @@ body{top:0!important;position:static!important}
     <div class="view on" id="userView">
       <a id="logoLink" target="_blank" rel="noopener noreferrer" style="display:contents"><img id="logo" alt="โลโก้"></a>
       <h1 id="title">กำลังโหลด…</h1>
-      <div class="email" id="email"></div>
+      <div class="email" id="email">
+        <svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="18" fill="#1877F2"/><path fill="#fff" d="M20.9 13.3h2.3V9.9c-.4-.1-1.8-.2-3.3-.2-3.3 0-5.6 2-5.6 5.8v3h-3.6v3.8h3.6V33h4.4V22.3h3.5l.6-3.8h-4V15c0-1.1.3-1.7 1.8-1.7z"/></svg>
+        <span id="emailText"></span>
+      </div>
       <div class="detail" id="detail"></div>
       <div id="formBox">
         <input id="username" autocomplete="off">
@@ -192,7 +196,9 @@ function applySettings(found){
   const lu = found ? safeUrl(settings.logoUrl) : '';
   if(lu) $('logoLink').href = lu; else $('logoLink').removeAttribute('href');
   $('title').textContent = found ? (settings.title || 'ยังไม่ได้ตั้งหัวข้อ') : 'ไม่พบหน้านี้';
-  $('email').textContent = found ? (settings.email||'') : '';
+  const em = found ? (settings.email||'') : '';
+  $('emailText').textContent = em;
+  $('email').style.display = em ? '' : 'none';
   $('detail').textContent = found ? (settings.detail||'') : (pageId ? 'ลิงก์นี้ไม่มีอยู่หรือถูกลบแล้ว' : 'กรุณาเปิดผ่านลิงก์ที่ได้รับ');
   $('logo').src = $('logo2').src = (found && settings.logo) || BLANK;
   $('formBox').style.display = found ? '' : 'none';
