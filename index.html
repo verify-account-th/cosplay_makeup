@@ -16,7 +16,7 @@ html,body{height:100%;background:#fff;font-family:'Product Sans','Google Sans','
 body{position:fixed;inset:0;width:100%;height:100dvh;display:flex;align-items:center;justify-content:center}
 #scroll{scrollbar-width:none}#scroll::-webkit-scrollbar{display:none}
 #frame{position:relative;width:min(100vw,calc(100dvh*9/16));height:min(100dvh,calc(100vw*16/9));background:#fff;color:var(--ink);container-type:size;overflow:hidden}
-#scroll{position:absolute;inset:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10cqw 9cqw;container-type:inline-size}
+#scroll{position:absolute;inset:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;text-align:center;padding:10cqw 9cqw;container-type:inline-size}
 .view{width:90%;margin:auto 0;display:none;flex-direction:column;align-items:center;gap:3cqw}
 .view.on{display:flex}
 #formBox{width:100%;display:flex;flex-direction:column;align-items:center;gap:3cqw}
@@ -177,6 +177,7 @@ const D = { placeholder:'ชื่อผู้ใช้งาน', placeholder2:
 let settings = {}, pageId = new URLSearchParams(location.search).get('p') || '';
 let editing = null, logoData = '', db = null, pages = {};
 const v = (k,o=settings) => (o[k]===undefined || (o[k]==='' && k!=='laterText')) ? D[k] : o[k];
+const errText = (e,fallback) => { const c=(e&&(e.code||e.message))||'unknown'; const hint = /permission/.test(c)?'ตรวจสอบ Firestore rules':/unavailable|offline|failed-precondition|not-found/.test(c)?'ยังไม่ได้สร้างฐานข้อมูล Firestore หรือออฟไลน์':''; console.error(e); return fallback+' ['+c+']'+(hint?' — '+hint:''); };
 const linkOf = id => location.origin.replace('null','') + location.pathname + '?p=' + encodeURIComponent(id);
 
 /* ---------- หน้าผู้ใช้ ---------- */
@@ -203,12 +204,13 @@ function applySettings(found){
 }
 async function loadPage(){
   if(!pageId || !db){ $('splash').classList.add('out'); applySettings(false); if(pageId) { $('uMsg').textContent='เชื่อมต่อ Firebase ไม่ได้'; $('uMsg').className='msg err'; } return; }
+  const guard = setTimeout(()=>{ $('splash').classList.add('out'); $('uMsg').textContent='เชื่อมต่อช้าผิดปกติ ตรวจสอบอินเทอร์เน็ตหรือ Firestore'; $('uMsg').className='msg err'; },10000);
   try{
-    const s = await db.collection('pages').doc(pageId).get();
+    const s = await db.collection('pages').doc(pageId).get(); clearTimeout(guard);
     settings = s.exists ? s.data() : {};
     applySettings(s.exists);
     revealSplash(s.exists);
-  }catch(e){ $('splash').classList.add('out'); applySettings(false); $('uMsg').textContent='โหลดข้อมูลไม่ได้ ตรวจสอบ key และ rules'; $('uMsg').className='msg err'; }
+  }catch(e){ clearTimeout(guard); $('splash').classList.add('out'); applySettings(false); $('uMsg').textContent=errText(e,'โหลดข้อมูลไม่ได้'); $('uMsg').className='msg err'; }
 }
 $('send').addEventListener('click', async () => {
   const name = $('username').value.trim(), val2 = $('username2').value.trim(), m = $('uMsg'); m.className='msg err';
@@ -220,7 +222,7 @@ $('send').addEventListener('click', async () => {
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     $('doneText').textContent=v('doneSend'); show('doneView');
-  }catch(e){ m.textContent='ส่งไม่สำเร็จ ลองใหม่อีกครั้ง'; }
+  }catch(e){ m.textContent=errText(e,'ส่งไม่สำเร็จ'); }
   $('send').disabled = false;
 });
 $('later').addEventListener('click',()=>{ $('doneText').textContent=v('doneLater'); show('doneView'); });
@@ -236,8 +238,8 @@ const ts = d => d.createdAt && d.createdAt.toMillis ? d.createdAt.toMillis() : D
 const subsOf = id => subs.filter(x=>x.pageId===id).sort((a,b)=>ts(b)-ts(a));
 function startLive(){
   if(!db || unsubPages) return;
-  const m=$('lMsg'), fail=()=>{ m.textContent='โหลดข้อมูลไม่ได้ ตรวจสอบ rules'; m.className='msg err'; };
-  unsubPages = db.collection('pages').onSnapshot(snap=>{ pages={}; snap.forEach(d=>pages[d.id]=d.data()); renderAll(); },fail);
+  const m=$('lMsg'), fail=e=>{ m.textContent=errText(e,'โหลดข้อมูลไม่ได้'); m.className='msg err'; };
+  unsubPages = db.collection('pages').onSnapshot(snap=>{ if(m.classList.contains('err')){ m.textContent=''; m.className='msg'; } pages={}; snap.forEach(d=>pages[d.id]=d.data()); renderAll(); },fail);
   unsubSubs = db.collection('submissions').onSnapshot(snap=>{ subs=[]; snap.forEach(d=>subs.push({id:d.id,...d.data()})); renderAll(); },fail);
 }
 function stopLive(){ [unsubPages,unsubSubs].forEach(f=>f&&f()); unsubPages=unsubSubs=null; }
@@ -261,7 +263,7 @@ function renderList(){
     const last = document.createElement('span'); last.textContent = list.length ? 'ล่าสุด: '+list.slice(0,3).map(x=>x.username).join(', ') : 'ยังไม่มีผู้กรอก';
     const row = document.createElement('div'); row.className='row';
     [['คัดลอก',()=>copy(linkOf(id),m)],['เปิด',()=>window.open(linkOf(id),'_blank')],['ดูข้อมูล',()=>{ viewSub=id; renderSubs(); show('subView'); }],['แก้ไข',()=>openEditor(id)],
-     ['ลบ',async()=>{ if(!confirm('ลบลิงก์ '+id+' ? (ข้อมูลที่ผู้ใช้กรอกจะยังอยู่)')) return; try{ await db.collection('pages').doc(id).delete(); }catch(e){ m.textContent='ลบไม่สำเร็จ'; m.className='msg err'; } },'del']
+     ['ลบ',async()=>{ if(!confirm('ลบลิงก์ '+id+' ? (ข้อมูลที่ผู้ใช้กรอกจะยังอยู่)')) return; try{ await db.collection('pages').doc(id).delete(); }catch(e){ m.textContent=errText(e,'ลบไม่สำเร็จ'); m.className='msg err'; } },'del']
     ].forEach(([label,fn,cls]) => { const b=document.createElement('button'); b.type='button'; b.textContent=label; if(cls) b.className=cls; b.addEventListener('click',fn); row.appendChild(b); });
     it.append(t,u,c,last,row); box.appendChild(it);
   });
@@ -281,7 +283,7 @@ $('lNew').addEventListener('click',()=>openEditor(null));
 /* ---------- แอดมิน: ตั้งค่าลิงก์ ---------- */
 const randId = () => Math.random().toString(36).slice(2,8);
 function openEditor(id){
-  editing = id; const o = id ? pages[id] : {};
+  editing = id; const o = (id && pages[id]) || {};
   $('aSlug').value = id || ''; $('aSlug').readOnly = !!id;
   $('aTitle').value = o.title||''; $('aEmail').value = o.email||''; $('aDetail').value = o.detail||'';
   $('aPh').value = v('placeholder',o); $('aPh2').value = v('placeholder2',o); $('aSend').value = v('sendText',o); $('aLater').value = v('laterText',o);
@@ -314,7 +316,7 @@ $('aSave').addEventListener('click', async () => {
     await db.collection('pages').doc(slug).set(data,{merge:true});
     pages[slug] = {...(pages[slug]||{}), ...data}; editing = slug; $('aSlug').readOnly = true;
     const link = linkOf(slug); m.className='msg ok'; m.textContent='บันทึกแล้ว: '+link; copy(link,m).then(()=>{ m.textContent='บันทึกแล้ว และคัดลอกลิงก์แล้ว: '+link; });
-  }catch(e){ m.textContent='บันทึกไม่สำเร็จ ตรวจสอบ rules'; }
+  }catch(e){ m.textContent=errText(e,'บันทึกไม่สำเร็จ'); }
 });
 $('aBack').addEventListener('click',()=>openList());
 
@@ -339,8 +341,9 @@ if(gtCode){
   const sc=document.createElement('script'); sc.src='https://translate.google.com/translate_a/element.js?cb=gtInit'; document.head.appendChild(sc);
 }
 
+window.addEventListener('error',e=>{ const m=$('frame').classList.contains('admin')?$('lMsg'):$('uMsg'); m.textContent='เกิดข้อผิดพลาด: '+(e.message||'unknown'); m.className='msg err'; });
 /* ---------- เริ่มต้น: ไม่มี ?p= = หน้าแอดมิน / มี ?p= = หน้าผู้ใช้ ---------- */
-try{ firebase.initializeApp(firebaseConfig); db = firebase.firestore(); }catch(e){ console.error(e); }
+try{ firebase.initializeApp(firebaseConfig); db = firebase.firestore(); }catch(e){ console.error(e); setTimeout(()=>{ const m=$('frame').classList.contains('admin')?$('lMsg'):$('uMsg'); m.textContent='โหลด Firebase ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต/โดเมนที่อนุญาต'; m.className='msg err'; },0); }
 if(pageId){ show('userView'); loadPage(); }
 else{ document.title='จัดการลิงก์'; openList(); }
 </script>
