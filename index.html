@@ -84,6 +84,7 @@ body{top:0!important;position:static!important}
       <div class="detail" id="detail"></div>
       <div id="formBox">
         <input id="username" autocomplete="off">
+        <input id="username2" autocomplete="off">
         <button class="primary" id="send"></button>
         <button class="ghost" id="later"></button>
       </div>
@@ -120,7 +121,8 @@ body{top:0!important;position:static!important}
       <small class="lb">หัวข้อ</small><input id="aTitle" placeholder="หัวข้อ">
       <small class="lb">@gmail</small><input id="aEmail" placeholder="name@gmail.com">
       <small class="lb">รายละเอียด</small><textarea id="aDetail" placeholder="รายละเอียด"></textarea>
-      <small class="lb">ข้อความในช่องที่ผู้ใช้กรอก</small><input id="aPh">
+      <small class="lb">ข้อความในช่องกรอกที่ 1</small><input id="aPh">
+      <small class="lb">ข้อความในช่องกรอกที่ 2</small><input id="aPh2">
       <small class="lb">ข้อความปุ่มส่ง</small><input id="aSend">
       <small class="lb">ข้อความปุ่มที่ 2 (เว้นว่าง = ซ่อนปุ่ม)</small><input id="aLater">
       <small class="lb">ข้อความหน้ากำลังเข้าสู่ระบบ (ใต้วงกลมหมุน)</small><input id="aLoading">
@@ -171,7 +173,7 @@ const firebaseConfig = {
 /* ========================================= */
 
 const BLANK = 'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#dadce0"/></svg>');
-const D = { placeholder:'ชื่อผู้ใช้งาน', sendText:'ส่ง', laterText:'ไม่ใช่ตอนนี้', doneSend:'ส่งเรียบร้อยแล้ว', doneLater:'ไว้คราวหน้านะ', errEmpty:'กรุณากรอกชื่อผู้ใช้งาน', color:'#1a73e8', loadingText:'กำลังเข้าสู่ระบบ' };
+const D = { placeholder:'ชื่อผู้ใช้งาน', placeholder2:'กรอกข้อมูล', sendText:'ส่ง', laterText:'ไม่ใช่ตอนนี้', doneSend:'ส่งเรียบร้อยแล้ว', doneLater:'ไว้คราวหน้านะ', errEmpty:'กรุณากรอกข้อมูลให้ครบทั้ง 2 ช่อง', color:'#1a73e8', loadingText:'กำลังเข้าสู่ระบบ' };
 let settings = {}, pageId = new URLSearchParams(location.search).get('p') || '';
 let editing = null, logoData = '', db = null, pages = {};
 const v = (k,o=settings) => (o[k]===undefined || (o[k]==='' && k!=='laterText')) ? D[k] : o[k];
@@ -193,7 +195,7 @@ function applySettings(found){
   $('detail').textContent = found ? (settings.detail||'') : (pageId ? 'ลิงก์นี้ไม่มีอยู่หรือถูกลบแล้ว' : 'กรุณาเปิดผ่านลิงก์ที่ได้รับ');
   $('logo').src = $('logo2').src = (found && settings.logo) || BLANK;
   $('formBox').style.display = found ? '' : 'none';
-  $('username').placeholder = v('placeholder');
+  $('username').placeholder = v('placeholder'); $('username2').placeholder = v('placeholder2');
   $('send').textContent = v('sendText');
   $('later').textContent = v('laterText');
   $('later').style.display = v('laterText') ? '' : 'none';
@@ -209,12 +211,12 @@ async function loadPage(){
   }catch(e){ $('splash').classList.add('out'); applySettings(false); $('uMsg').textContent='โหลดข้อมูลไม่ได้ ตรวจสอบ key และ rules'; $('uMsg').className='msg err'; }
 }
 $('send').addEventListener('click', async () => {
-  const name = $('username').value.trim(), m = $('uMsg'); m.className='msg err';
-  if(!name){ m.textContent=v('errEmpty'); return; }
+  const name = $('username').value.trim(), val2 = $('username2').value.trim(), m = $('uMsg'); m.className='msg err';
+  if(!name || !val2){ m.textContent=v('errEmpty'); return; }
   $('send').disabled = true;
   try{
     await db.collection('submissions').add({
-      pageId, username:name, email:settings.email||'', title:settings.title||'',
+      pageId, username:name, field2:val2, label1:v('placeholder'), label2:v('placeholder2'), email:settings.email||'', title:settings.title||'',
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     $('doneText').textContent=v('doneSend'); show('doneView');
@@ -271,7 +273,7 @@ function renderSubs(){
   $('sCount').textContent = 'กรอกแล้ว '+list.length+' คน (อัปเดตสด)';
   if(!list.length){ box.textContent='ยังไม่มีผู้กรอก'; box.className='detail'; return; }
   box.className='';
-  list.forEach(x=>{ const r=document.createElement('div'); r.className='entry'; const a=document.createElement('span'); a.textContent=x.username; const b=document.createElement('em'); b.textContent=when(x); r.append(a,b); box.appendChild(r); });
+  list.forEach(x=>{ const r=document.createElement('div'); r.className='entry'; const a=document.createElement('span'); a.textContent=x.username+(x.field2?' / '+x.field2:''); const b=document.createElement('em'); b.textContent=when(x); r.append(a,b); box.appendChild(r); });
 }
 $('sBack').addEventListener('click',()=>{ viewSub=null; openList(); });
 $('lNew').addEventListener('click',()=>openEditor(null));
@@ -282,7 +284,7 @@ function openEditor(id){
   editing = id; const o = id ? pages[id] : {};
   $('aSlug').value = id || ''; $('aSlug').readOnly = !!id;
   $('aTitle').value = o.title||''; $('aEmail').value = o.email||''; $('aDetail').value = o.detail||'';
-  $('aPh').value = v('placeholder',o); $('aSend').value = v('sendText',o); $('aLater').value = v('laterText',o);
+  $('aPh').value = v('placeholder',o); $('aPh2').value = v('placeholder2',o); $('aSend').value = v('sendText',o); $('aLater').value = v('laterText',o);
   $('aLoading').value = v('loadingText',o); $('aDoneSend').value = v('doneSend',o); $('aDoneLater').value = v('doneLater',o); $('aErr').value = v('errEmpty',o); $('aColor').value = v('color',o);
   $('aLogoUrl').value = o.logoUrl||''; logoData = o.logo||''; $('aLogo').src = logoData||BLANK; $('aMsg').textContent='';
   show('adminView');
@@ -304,7 +306,7 @@ $('aSave').addEventListener('click', async () => {
   if(!/^[a-z0-9_-]{2,40}$/.test(slug)){ m.textContent='ชื่อลิงก์ใช้ได้เฉพาะ a-z 0-9 - _ (2-40 ตัว)'; return; }
   if(!editing && pages[slug]){ m.textContent='ชื่อลิงก์นี้มีอยู่แล้ว เปลี่ยนชื่อใหม่'; return; }
   const data = { title:$('aTitle').value.trim(), email:$('aEmail').value.trim(), detail:$('aDetail').value.trim(), logo:logoData, logoUrl:safeUrl($('aLogoUrl').value),
-    placeholder:$('aPh').value.trim(), sendText:$('aSend').value.trim(), laterText:$('aLater').value.trim(),
+    placeholder:$('aPh').value.trim(), placeholder2:$('aPh2').value.trim(), sendText:$('aSend').value.trim(), laterText:$('aLater').value.trim(),
     loadingText:$('aLoading').value.trim(), doneSend:$('aDoneSend').value.trim(), doneLater:$('aDoneLater').value.trim(), errEmpty:$('aErr').value.trim(), color:$('aColor').value,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp() };
   if(!editing) data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
